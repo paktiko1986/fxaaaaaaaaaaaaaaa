@@ -129,12 +129,20 @@ export class ResumableWebSocket extends EventTarget {
     this.tryResume();
   };
 
+  private isValidChannelId(channelId: string): boolean {
+    return /^[A-Za-z0-9_-]{1,128}$/.test(channelId);
+  }
+
   private tryResume(): void {
     if (Date.now() > this.resumeDeadline) {
       this.finish();
       return;
     }
-    const url = new URL(`/v1/ws/${this.channelId}`, this.url);
+    if (!this.channelId || !this.isValidChannelId(this.channelId)) {
+      this.finish();
+      return;
+    }
+    const url = new URL(`/v1/ws/${encodeURIComponent(this.channelId)}`, this.url);
     const previous = this.socket;
     // The token goes in the subprotocol, not the URL, which proxies tend to log.
     this.socket = this.attach(
